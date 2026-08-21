@@ -15,7 +15,10 @@
   main { padding: 16px 16px 32px; }
   .day { margin: 22px 4px 10px; color: #c4b8a5; font-size: 0.95rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
   .day.today { color: #f2c14e; }
-  button.dose { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 16px; text-align: left; border: 0; border-radius: 18px; padding: 20px 22px; margin: 0 0 12px; min-height: 84px; font: inherit; font-size: 1.25rem; background: #3b2a1c; color: #fff7ea; }
+  hr.slot { border: 0; border-top: 1px solid #6a5a48; margin: 8px 10px 20px; }
+  button.dose { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 16px; text-align: left; border: 0; border-radius: 18px; padding: 20px 22px; margin: 0 0 12px; min-height: 84px; font: inherit; font-size: 1.25rem; color: #fff7ea; }
+  button.dose.am { background: #3a3320; }
+  button.dose.pm { background: #3b2a1c; }
   button.dose:active { transform: scale(0.99); }
   .left { display: flex; flex-direction: column; gap: 4px; }
   .name { font-weight: 700; }
@@ -77,10 +80,18 @@ function render(doses) {
     h.className = "day" + (key === today ? " today" : "");
     h.textContent = (key === today ? "Today \u00b7 " : "") + dayLabel(key);
     main.appendChild(h);
-    for (const dose of groups.get(key)) {
+    const items = groups.get(key).slice().sort((a, b) => (a.slot === b.slot ? 0 : a.slot === "am" ? -1 : 1));
+    let lastSlot = null;
+    for (const dose of items) {
+      if (lastSlot && lastSlot !== dose.slot) {
+        const hr = document.createElement("hr");
+        hr.className = "slot";
+        main.appendChild(hr);
+      }
+      lastSlot = dose.slot;
       const due = !dose.given_at && new Date(dose.scheduled_at).getTime() <= now;
       const btn = document.createElement("button");
-      btn.className = "dose" + (dose.given_at ? " done" : due ? " overdue" : "");
+      btn.className = "dose " + dose.slot + (dose.given_at ? " done" : due ? " overdue" : "");
       btn.type = "button";
       btn.innerHTML = '<span class="left"><span class="name"></span><span class="meta"></span></span><span class="mark"></span>';
       btn.querySelector(".name").textContent = dose.med;
